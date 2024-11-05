@@ -1,5 +1,5 @@
 from abc import ABCMeta, abstractmethod
-from typing import Generic, TypeVar
+from typing import Callable, Generic, TypeVar
 
 Msg = TypeVar("Msg")
 
@@ -20,12 +20,15 @@ class BasePublisher(Generic[Msg], metaclass=ABCMeta):
         ...
 
 
-class BaseSubscriber(metaclass=ABCMeta):
+class BaseSubscriber(Generic[Msg], metaclass=ABCMeta):
     @abstractmethod
-    def start(self) -> None:
+    def start(self, callback: Callable[[Msg], None]) -> None:
         """Begin an event loop to handle incoming messages.
 
         This must be called at most once.
+
+        Args:
+            callback (Callable[[Msg], None]): A function to call when a message is received.
 
         Raises:
             RuntimeError: If this method is called more than once.

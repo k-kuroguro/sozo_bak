@@ -93,3 +93,6 @@ class MonitorMsg:
             raise ValueError(str(e))
 
         return msg
+
+    def __str__(self) -> str:
+        return self._msg.__str__()
