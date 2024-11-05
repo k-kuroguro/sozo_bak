@@ -8,13 +8,13 @@ message MonitorMsg {
   google.protobuf.Timestamp timestamp = 1;
 
   oneof payload {
-    StudyState study_state = 2;
+    ConcentrationStatus concentration_status = 2;
     Error error = 3;
   }
 }
 
-message StudyState {
-  float concentration_score = 1;
+message ConcentrationStatus  {
+  float overall_score = 1;
   float sleeping_confidence = 2;
 }
 

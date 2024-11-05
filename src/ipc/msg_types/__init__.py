@@ -1,3 +1,3 @@
-from .wrappers import MonitorError, MonitorMsg, StudyState
+from .wrappers import ConcentrationStatus, MonitorError, MonitorMsg
 
-__all__ = ["MonitorMsg", "StudyState", "MonitorError"]
+__all__ = ["ConcentrationStatus", "MonitorError", "MonitorMsg"]

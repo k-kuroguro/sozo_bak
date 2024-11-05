@@ -6,7 +6,7 @@ from .base_pubsub import BasePublisher, BaseSubscriber
 from .msg_types import MonitorMsg
 
 
-class ZMQPublisher(BasePublisher[MonitorMsg]):
+class ZmqPublisher(BasePublisher[MonitorMsg]):
     def __init__(self, addr: str, topic: str):
         self._topic = topic
 
@@ -25,7 +25,7 @@ class ZMQPublisher(BasePublisher[MonitorMsg]):
         self._ctx.term()
 
 
-class ZMQSubscriber(BaseSubscriber[MonitorMsg]):
+class ZmqSubscriber(BaseSubscriber[MonitorMsg]):
     def __init__(self, addr: str, topic: str):
         self._topic = topic
         self._thread: Thread | None = None

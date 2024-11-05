@@ -4,27 +4,27 @@ from enum import Enum
 
 from google.protobuf.message import DecodeError as _DecodeError
 
+from .monitor_msg_pb2 import ConcentrationStatus as _ConcentrationStatus
 from .monitor_msg_pb2 import Error as _MonitorError
 from .monitor_msg_pb2 import MonitorMsg as _MonitorMsg
-from .monitor_msg_pb2 import StudyState as _StudyState
 
 
-@dataclass(slots=True)
-class StudyState:
-    concentration_score: float
+@dataclass(slots=True, frozen=True)
+class ConcentrationStatus:
+    overall_score: float
     sleeping_confidence: float
 
 
-@dataclass(slots=True)
+@dataclass(slots=True, frozen=True)
 class MonitorError:
-    class Type(Enum):
+    class Type(int, Enum):
         UNKNOWN = _MonitorError.Type.UNKNOWN
 
     type: Type
     msg: str
 
 
-Payload = StudyState | MonitorError
+Payload = ConcentrationStatus | MonitorError
 
 
 class MonitorMsg:
@@ -42,13 +42,11 @@ class MonitorMsg:
             payload (Payload): The payload containing the monitoring result or error.
         """
         self._msg = _MonitorMsg()
-
         self._msg.timestamp.FromDatetime(timestamp)
-
-        if isinstance(payload, StudyState):
-            self._msg.study_state.CopyFrom(
-                _StudyState(
-                    concentration_score=payload.concentration_score,
+        if isinstance(payload, ConcentrationStatus):
+            self._msg.concentration_status.CopyFrom(
+                _ConcentrationStatus(
+                    overall_score=payload.overall_score,
                     sleeping_confidence=payload.sleeping_confidence,
                 )
             )
@@ -66,8 +64,8 @@ class MonitorMsg:
         """
         if not self._msg.HasField("timestamp"):
             raise ValueError("timestamp field is required")
-        if not self._msg.HasField("study_state") and not self._msg.HasField("error"):
-            raise ValueError("study_state or error field is required")
+        if not self._msg.HasField("concentration_status") and not self._msg.HasField("error"):
+            raise ValueError("Either concentration_status or error field is required")
 
         return self._msg.SerializeToString()
 
@@ -93,6 +91,24 @@ class MonitorMsg:
             raise ValueError(str(e))
 
         return msg
+
+    @property
+    def timestamp(self) -> datetime.datetime:
+        return self._msg.timestamp.ToDatetime()
+
+    @property
+    def payload(self) -> Payload:
+        return (
+            ConcentrationStatus(
+                overall_score=self._msg.concentration_status.overall_score,
+                sleeping_confidence=self._msg.concentration_status.sleeping_confidence,
+            )
+            if self._msg.HasField("concentration_status")
+            else MonitorError(
+                type=MonitorError.Type(self._msg.error.type),
+                msg=self._msg.error.msg,
+            )
+        )
 
     def __str__(self) -> str:
         return self._msg.__str__()
