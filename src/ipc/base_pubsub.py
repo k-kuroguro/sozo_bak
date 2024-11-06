@@ -26,6 +26,7 @@ class BaseSubscriber(Generic[Msg], metaclass=ABCMeta):
         """Begin an event loop to handle incoming messages.
 
         This must be called at most once.
+        The event loop should run asynchronously, meaning the start method must not block subsequent operations.
 
         Args:
             callback (Callable[[Msg], None]): A function to call when a message is received.

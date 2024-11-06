@@ -3,7 +3,7 @@ document.addEventListener("DOMContentLoaded", function () {
       fetch('/score')
          .then(response => response.json())
          .then(data => {
-            document.getElementById('score').innerHTML = `Score: ${data.score}`;
+            document.getElementById('score').innerHTML = `Score: ${data.score}, Sleeping: ${data.sleeping_confidence}`;
          })
          .catch(error => console.error('Error fetching score:', error));
    };
