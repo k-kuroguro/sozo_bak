@@ -7,8 +7,8 @@ from .store import store
 bp = Blueprint("routes", __name__)
 
 
-class Score(TypedDict):
-    score: float
+class ConcentrationStatus(TypedDict):
+    overall_score: float
     sleeping_confidence: float
 
 
@@ -17,9 +17,11 @@ def index() -> str:
     return render_template("index.html")
 
 
-@bp.route("/score")
-def score() -> Score:
+@bp.route("/concentration_status")
+def concentration_status() -> ConcentrationStatus:
     status = store.get_status()
     if status is None:
-        return Score(score=0.0, sleeping_confidence=0.0)
-    return Score(score=status.overall_score, sleeping_confidence=status.sleeping_confidence)
+        return ConcentrationStatus(overall_score=-1.0, sleeping_confidence=-1.0)
+    return ConcentrationStatus(
+        overall_score=status.overall_score, sleeping_confidence=status.sleeping_confidence
+    )

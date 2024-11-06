@@ -46,7 +46,7 @@ class StubSubscriber(BaseSubscriber):
 def main():
     subscriber = StubSubscriber()
     app = App(subscriber)
-    app.run(host="0.0.0.0", port=8080, threaded=True)
+    app.run(host="0.0.0.0", port=8080, threaded=True, debug=True)
 
 
 if __name__ == "__main__":
