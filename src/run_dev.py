@@ -34,7 +34,7 @@ class StubSubscriber(BaseSubscriber):
                 ),
             )
             callback(msg)
-            time.sleep(5)
+            time.sleep(1)
 
     def close(self) -> None:
         self._is_running = False
@@ -43,10 +43,10 @@ class StubSubscriber(BaseSubscriber):
         self._is_closed = True
 
 
-def main():
+def main() -> None:
     subscriber = StubSubscriber()
     app = App(subscriber)
-    app.run(host="0.0.0.0", port=8080, threaded=True, debug=True)
+    app.run(host="0.0.0.0", port=8080, log_level="debug")
 
 
 if __name__ == "__main__":

@@ -3,6 +3,7 @@ from dataclasses import dataclass
 from enum import Enum
 
 from google.protobuf.message import DecodeError as _DecodeError
+from google.protobuf.message import EncodeError as _EncodeError
 
 from .monitor_msg_pb2 import ConcentrationStatus as _ConcentrationStatus
 from .monitor_msg_pb2 import Error as _MonitorError
@@ -27,31 +28,17 @@ class MonitorError:
 Payload = ConcentrationStatus | MonitorError
 
 
+@dataclass(slots=True, frozen=True)
 class MonitorMsg:
-    """A message for the monitoring result or error."""
+    """A message for the monitoring result or error.
 
-    def __init__(
-        self,
-        timestamp: datetime.datetime,
-        payload: Payload,
-    ) -> None:
-        """Create a message.
+    Args:
+        timestamp (datetime.datetime): Timestamp indicating when the monitoring result was recorded.
+        payload (Payload): Monitoring result or error.
+    """
 
-        Args:
-            timestamp (datetime.datetime): The timestamp indicating when the monitoring result was recorded.
-            payload (Payload): The payload containing the monitoring result or error.
-        """
-        self._msg = _MonitorMsg()
-        self._msg.timestamp.FromDatetime(timestamp)
-        if isinstance(payload, ConcentrationStatus):
-            self._msg.concentration_status.CopyFrom(
-                _ConcentrationStatus(
-                    overall_score=payload.overall_score,
-                    sleeping_confidence=payload.sleeping_confidence,
-                )
-            )
-        else:
-            self._msg.error.CopyFrom(_MonitorError(type=payload.type.value, msg=payload.msg))
+    timestamp: datetime.datetime
+    payload: Payload
 
     def serialize(self) -> bytes:
         """Serialize the message to bytes.
@@ -60,18 +47,34 @@ class MonitorMsg:
             bytes: The serialized message.
 
         Raises:
-            ValueError: If the message is not valid.
+            ValueError: If serialization fails.
         """
-        if not self._msg.HasField("timestamp"):
-            raise ValueError("timestamp field is required")
-        if not self._msg.HasField("concentration_status") and not self._msg.HasField("error"):
-            raise ValueError("Either concentration_status or error field is required")
 
-        return self._msg.SerializeToString()
+        proto = _MonitorMsg()
+        proto.timestamp.FromDatetime(self.timestamp)
+        if isinstance(self.payload, ConcentrationStatus):
+            proto.payload.concentration_status.CopyFrom(
+                _ConcentrationStatus(
+                    overall_score=self.payload.overall_score,
+                    sleeping_confidence=self.payload.sleeping_confidence,
+                )
+            )
+        else:
+            proto.payload.error.CopyFrom(
+                _MonitorError(
+                    type=self.payload.type.value,
+                    msg=self.payload.msg,
+                )
+            )
+
+        try:
+            return proto.SerializeToString()
+        except _EncodeError as e:
+            raise ValueError(str(e))
 
     @classmethod
     def deserialize(cls, buf: bytes) -> "MonitorMsg":
-        """Deserialize a message from bytes.
+        """Deserialize the message from bytes.
 
         Args:
             buf (bytes): The serialized message.
@@ -80,35 +83,28 @@ class MonitorMsg:
             MonitorMsg: The deserialized message.
 
         Raises:
-            ValueError: If the deserialization fails.
+            ValueError: If deserialization fails.
         """
-        msg = cls.__new__(cls)
-        msg._msg = _MonitorMsg()
 
+        proto = _MonitorMsg()
         try:
-            msg._msg.ParseFromString(buf)
+            proto.ParseFromString(buf)
         except _DecodeError as e:
             raise ValueError(str(e))
 
-        return msg
-
-    @property
-    def timestamp(self) -> datetime.datetime:
-        return self._msg.timestamp.ToDatetime()
-
-    @property
-    def payload(self) -> Payload:
-        return (
-            ConcentrationStatus(
-                overall_score=self._msg.concentration_status.overall_score,
-                sleeping_confidence=self._msg.concentration_status.sleeping_confidence,
+        payload: Payload
+        if proto.HasField("concentration_status"):
+            payload = ConcentrationStatus(
+                overall_score=proto.payload.concentration_status.overall_score,
+                sleeping_confidence=proto.payload.concentration_status.sleeping_confidence,
             )
-            if self._msg.HasField("concentration_status")
-            else MonitorError(
-                type=MonitorError.Type(self._msg.error.type),
-                msg=self._msg.error.msg,
+        else:
+            payload = MonitorError(
+                type=MonitorError.Type(proto.payload.error.type),
+                msg=proto.payload.error.msg,
             )
+
+        return MonitorMsg(
+            timestamp=proto.timestamp.ToDatetime(),
+            payload=payload,
         )
-
-    def __str__(self) -> str:
-        return self._msg.__str__()

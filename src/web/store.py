@@ -1,22 +1,35 @@
-from ipc import ConcentrationStatus
+from asyncio import Event
+from threading import Lock
+
+from ipc import MonitorMsg
 
 
-class Store:
-    _instance = None
+class IncomingDataStore:
+    """Singleton class to store the incoming data via IPC."""
 
-    def __new__(cls):
+    _instance: "IncomingDataStore | None" = None
+    _lock = Lock()
+
+    def __new__(cls) -> "IncomingDataStore":
         if cls._instance is None:
-            cls._instance = super(Store, cls).__new__(cls)
+            with cls._lock:
+                cls._instance = super(IncomingDataStore, cls).__new__(cls)
+                cls._instance._initialized = False  # type: ignore
         return cls._instance
 
     def __init__(self) -> None:
-        self._status: ConcentrationStatus | None = None
+        if self._initialized:  # type: ignore
+            return
+        self._initialized = True
+        self._latest_monitor_msg: MonitorMsg | None = None
+        self._changed_event = Event()
 
-    def update_status(self, status: ConcentrationStatus | None) -> None:
-        self._status = status
+    @property
+    def latest_monitor_msg(self) -> MonitorMsg | None:
+        return self._latest_monitor_msg
 
-    def get_status(self) -> ConcentrationStatus | None:
-        return self._status
-
-
-store = Store()
+    @latest_monitor_msg.setter
+    def latest_monitor_msg(self, value: MonitorMsg | None) -> None:
+        self._latest_monitor_msg = value
+        self._changed_event.set()
+        self._changed_event.clear()

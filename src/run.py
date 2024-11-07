@@ -5,7 +5,7 @@ from local import App as LocalApp
 from web import App as WebApp
 
 
-def main():
+def main() -> None:
     socket_addr = "ipc:///tmp/monitoring"
     topic = "monitoring"
     publisher = ZmqPublisher(socket_addr, topic)
@@ -16,7 +16,7 @@ def main():
 
     web_thread = Thread(
         target=webapp.run,
-        kwargs={"host": "0.0.0.0", "port": 8080, "threaded": True},
+        kwargs={"host": "0.0.0.0", "port": 8080},
     )
     local_thread = Thread(target=localapp.run)
 

@@ -1,33 +1,28 @@
-from typing import Any
+import uvicorn
+from fastapi import FastAPI
+from fastapi.staticfiles import StaticFiles
 
-from flask import Flask
+from ipc import BaseSubscriber, MonitorMsg
 
-from ipc import BaseSubscriber, ConcentrationStatus, MonitorMsg
-
-from . import routes
-from .store import store
+from .constants import STATIC_DIR
+from .router import router
+from .store import IncomingDataStore
 
 
 class App:
     def __init__(self, subscriber: BaseSubscriber[MonitorMsg]) -> None:
         self._subscriber = subscriber
 
-        self._flask_app = Flask(__name__)
-        self._flask_app.register_blueprint(routes.bp)
+        self._fastapi_app = FastAPI(docs_url=None, redoc_url=None, openapi_url=None)
+        self._fastapi_app.mount(
+            path="/static", app=StaticFiles(directory=STATIC_DIR), name="static"
+        )
+        self._fastapi_app.include_router(router)
 
-    def run(
-        self,
-        host: str | None = None,
-        port: int | None = None,
-        debug: bool | None = None,
-        load_dotenv: bool = True,
-        **options: Any,
-    ) -> None:
-        self._subscriber.start(self._update_status)
-        self._flask_app.run(host, port, debug, load_dotenv, **options)
+    def run(self, host: str, port: int, log_level: str | None = None) -> None:
+        self._subscriber.start(self._on_message)
+        uvicorn.run(self._fastapi_app, host=host, port=port, log_level="info")
 
-    def _update_status(self, msg: MonitorMsg) -> None:
-        if isinstance(msg.payload, ConcentrationStatus):
-            store.update_status(msg.payload)
-        else:
-            store.update_status(None)
+    def _on_message(self, msg: MonitorMsg) -> None:
+        store = IncomingDataStore()
+        store.latest_monitor_msg = msg

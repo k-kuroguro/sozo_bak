@@ -29,7 +29,7 @@ class BaseSubscriber(Generic[Msg], metaclass=ABCMeta):
         The event loop should run asynchronously, meaning the start method must not block subsequent operations.
 
         Args:
-            callback (Callable[[Msg], None]): A function to call when a message is received.
+            callback (Callable[[Msg], None]): Function to call when a message is received.
 
         Raises:
             RuntimeError: If this method is called more than once.
