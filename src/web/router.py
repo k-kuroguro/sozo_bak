@@ -23,7 +23,7 @@ async def monitor(
 ) -> StreamingResponse:
     async def generator(store: IncomingDataStore):
         while True:
-            await store._changed_event.wait()
+            await store.wait_for_change()
             yield "data:1\n\n"
             print("sent")
 

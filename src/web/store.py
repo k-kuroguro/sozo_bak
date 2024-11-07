@@ -1,11 +1,12 @@
 from asyncio import Event
 from threading import Lock
+from typing import Literal
 
 from ipc import MonitorMsg
 
 
 class IncomingDataStore:
-    """Singleton class to store the incoming data via IPC."""
+    """Singleton class to store the incoming data."""
 
     _instance: "IncomingDataStore | None" = None
     _lock = Lock()
@@ -23,6 +24,9 @@ class IncomingDataStore:
         self._initialized = True
         self._latest_monitor_msg: MonitorMsg | None = None
         self._changed_event = Event()
+
+    async def wait_for_change(self) -> Literal[True]:
+        return await self._changed_event.wait()
 
     @property
     def latest_monitor_msg(self) -> MonitorMsg | None:
