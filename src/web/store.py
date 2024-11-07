@@ -6,7 +6,7 @@ from ipc import MonitorMsg
 
 
 class IncomingDataStore:
-    """Singleton class to store the incoming data."""
+    """Singleton class to store data received via IPC."""
 
     _instance: "IncomingDataStore | None" = None
     _lock = Lock()
