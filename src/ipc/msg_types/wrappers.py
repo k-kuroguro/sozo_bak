@@ -21,6 +21,9 @@ class MonitorError:
     class Type(int, Enum):
         UNKNOWN = _MonitorError.Type.UNKNOWN
 
+        def __str__(self) -> str:
+            return self.name
+
     type: Type
     msg: str
 
