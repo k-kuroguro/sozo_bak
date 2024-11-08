@@ -11,6 +11,7 @@ const createEventSource = () => {
    });
    es.addEventListener('close', function (event) {
       console.log('Connection closed');
+      attemptReconnect();
    });
    es.addEventListener('error', function (event) {
       console.log('Error', event);
@@ -19,6 +20,9 @@ const createEventSource = () => {
    es.addEventListener('open', function (event) {
       console.log('Connection established');
       reconnectFrequencySeconds = 2; // 接続が確立したら再接続間隔をリセット
+      if (reconnectInterval) {
+         clearInterval(reconnectInterval); // 再接続インターバルをクリア
+      }
    });
    window.addEventListener('beforeunload', function () {
       es.close(); // ウィンドウが閉じられる前に接続をクローズ
@@ -35,9 +39,9 @@ const attemptReconnect = () => {
    if (es.readyState === 2) {  // 接続が切れていれば
       es = createEventSource();  // 新しい EventSource を作成
       reconnectFrequencySeconds = Math.min(reconnectFrequencySeconds * 2, 64);  // 再接続間隔を倍増、最大64秒に制限
+      console.log(reconnectFrequencySeconds);
+      restartReconnectInterval();  // 再接続インターバルを再設定
    }
-   console.log(reconnectFrequencySeconds);
-   restartReconnectInterval();  // 再接続インターバルを再設定
 };
 
 // 再接続インターバルを管理する関数
@@ -47,6 +51,3 @@ const restartReconnectInterval = () => {
    }
    reconnectInterval = setInterval(attemptReconnect, reconnectFrequencySeconds * 1000);  // 新しい interval を設定
 };
-
-// 初期の再接続インターバルの開始
-restartReconnectInterval();
