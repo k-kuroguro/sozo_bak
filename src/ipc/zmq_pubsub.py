@@ -52,7 +52,7 @@ class ZmqSubscriber(BaseSubscriber[MonitorMsg]):
         while self._is_running:
             if self._socket in dict(poller.poll(100)):
                 _, msg = self._socket.recv_multipart()
-                callback(MonitorMsg.deserialize(msg))
+                callback(MonitorMsg.from_bytes(msg))
 
     def close(self) -> None:
         self._is_running = False

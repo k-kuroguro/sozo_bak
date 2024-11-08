@@ -76,7 +76,7 @@ class MonitorMsg:
             raise ValueError(str(e))
 
     @classmethod
-    def deserialize(cls, buf: bytes) -> "MonitorMsg":
+    def from_bytes(cls, buf: bytes) -> "MonitorMsg":
         """Deserialize the message from bytes.
 
         Args:
@@ -111,3 +111,6 @@ class MonitorMsg:
             timestamp=proto.timestamp.ToDatetime(),
             payload=payload,
         )
+
+    def __bytes__(self) -> bytes:
+        return self.serialize()
