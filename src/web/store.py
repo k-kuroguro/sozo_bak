@@ -2,7 +2,7 @@ from asyncio import Event
 from threading import Lock
 from typing import Literal
 
-from ipc import MonitorMsg
+from schema import MonitorMsg
 
 
 class IncomingDataStore:

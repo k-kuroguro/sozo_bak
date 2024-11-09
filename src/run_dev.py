@@ -3,7 +3,8 @@ import time
 from random import random
 from threading import Thread
 
-from ipc import BaseSubscriber, ConcentrationStatus, MonitorMsg
+from ipc import BaseSubscriber
+from schema import ConcentrationStatus, MonitorMsg
 from web import App
 
 
@@ -11,15 +12,8 @@ class StubSubscriber(BaseSubscriber):
     def __init__(self):
         self._thread: Thread | None = None
         self._is_running = False
-        self._is_closed = False
 
     def start(self, callback) -> None:
-        # TODO: ここのエラーは実装に依らない統一定義にしておきたい
-        if self._is_running:
-            raise RuntimeError("Subscriber is already running")
-        if self._is_closed:
-            raise ValueError("Subscriber is closed")
-
         self._is_running = True
         self._thread = Thread(target=self._run, args=(callback,), daemon=True)
         self._thread.start()
@@ -40,7 +34,6 @@ class StubSubscriber(BaseSubscriber):
         self._is_running = False
         if self._thread and self._thread.is_alive():
             self._thread.join()
-        self._is_closed = True
 
 
 def main() -> None:

@@ -2,7 +2,8 @@ import uvicorn
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 
-from ipc import BaseSubscriber, MonitorMsg
+from ipc import BaseSubscriber
+from schema import MonitorMsg
 
 from .constants import STATIC_DIR
 from .router import router

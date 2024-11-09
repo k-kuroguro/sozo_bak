@@ -6,7 +6,7 @@ from fastapi import APIRouter, Depends, Request
 from fastapi.responses import HTMLResponse, StreamingResponse
 from fastapi.templating import Jinja2Templates
 
-from ipc import ConcentrationStatus, MonitorError
+from schema import ConcentrationStatus, MonitorError
 
 from .constants import TEMPLATE_DIR
 from .store import IncomingDataStore

@@ -2,8 +2,10 @@ from threading import Thread
 
 import zmq
 
+from schema import MonitorMsg
+
 from .base_pubsub import BasePublisher, BaseSubscriber
-from .msg_types import MonitorMsg
+from .serializer import Serializer
 
 
 class ZmqPublisher(BasePublisher[MonitorMsg]):
@@ -14,11 +16,13 @@ class ZmqPublisher(BasePublisher[MonitorMsg]):
         self._socket = self._ctx.socket(zmq.PUB)
         self._socket.bind(addr)
 
+        self._serializer = Serializer(MonitorMsg)
+
     def publish(self, msg: MonitorMsg) -> None:
         if self._socket.closed:
             raise ValueError("Publisher is closed")
 
-        self._socket.send_multipart([self._topic.encode(), msg.serialize()])
+        self._socket.send_multipart([self._topic.encode(), self._serializer.serialize(msg)])
 
     def close(self) -> None:
         self._socket.close()
@@ -36,6 +40,8 @@ class ZmqSubscriber(BaseSubscriber[MonitorMsg]):
         self._socket.connect(addr)
         self._socket.subscribe(topic.encode())
 
+        self._serializer = Serializer(MonitorMsg)
+
     def start(self, callback) -> None:
         if self._is_running:
             raise RuntimeError("Subscriber is already running")
@@ -52,7 +58,7 @@ class ZmqSubscriber(BaseSubscriber[MonitorMsg]):
         while self._is_running:
             if self._socket in dict(poller.poll(100)):
                 _, msg = self._socket.recv_multipart()
-                callback(MonitorMsg.from_bytes(msg))
+                callback(self._serializer.desetialize(msg))
 
     def close(self) -> None:
         self._is_running = False
